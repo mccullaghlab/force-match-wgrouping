@@ -34,7 +34,7 @@ def groupByCustom(vars):
     count = 1
     for group in vars.groups:
         particle = fmAtomGroup()
-        particle.name = str(count)
+        particle.name = str("%03d" % count)
         particle.number = count
         particle.position = getGroupCOM(vars, group)
         particle.mass = getGroupMass(vars, group)
@@ -76,6 +76,7 @@ def noGrouping(vars):
     g =[]
     print "\tNo atom grouping requested."
     ionsCount = len(vars.ionsCoord)
+    vars.groups = []
     for ion in range(0, ionsCount):
         particle = fmAtomGroup
         particle.name = vars.ionsCoord[ion].name
@@ -85,6 +86,7 @@ def noGrouping(vars):
         particle.charge = vars.ionsCoord[ion].charge
         particle.force = vars.ionsForce[ion].position
 
+        vars.groups.append(ion)
         g.append(particle)
 
     vars.atomGroups = g
@@ -110,8 +112,8 @@ def getGroupCOM(vars, group):
     sumProdcuts = 0
     count = 0
     for number in group:
-        mi = vars.ionsCoord[count].mass
-        ri = vars.ionsCoord[count].position
+        mi = vars.ionsCoord[number - 1].mass
+        ri = vars.ionsCoord[number - 1].position
         sumOfMasses += mi
         sumProdcuts += (mi * ri)
         count += 1
@@ -122,7 +124,7 @@ def getGroupMass(vars, group):
     mass = 0
     count = 0
     for number in group:
-        mass += vars.ionsCoord[count].mass
+        mass += vars.ionsCoord[number - 1].mass
         count += 1
     return mass
 
@@ -130,7 +132,7 @@ def getGroupCharge(vars, group):
     charge = 0
     count = 0
     for number in group:
-        charge += vars.ionsCoord[count].charge
+        charge += vars.ionsCoord[number - 1].charge
         count += 1
     return float(charge / count)
 
@@ -138,7 +140,7 @@ def getGroupForce(vars, group):
     force = [0, 0, 0]
     count = 0
     for number in group:
-        force += vars.ionsForce[count].position
+        force += vars.ionsForce[number - 1].position
         count += 1
     return force
 

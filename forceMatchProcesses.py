@@ -1,7 +1,6 @@
 __author__ = 'Greg Poisson'
 
 import numpy
-import sys
 
 
 # Define which plots to draw, and in which order
@@ -84,13 +83,13 @@ def computeCoordData(a, b, vars):
 
 # Performs a series of force computations on one pair of particles for one time step
 def computeForceData(a, b, vars):
-    if (vars.plotOrder[2] > 0) | (vars.plotOrder[3] > 0):
-        magR, r = computeMagR(a, b, vars)
-        if vars.rMin <= magR < vars.rMax:
-            binNo = int(magR / vars.binSize)
-            if binNo < vars.binCount:
-                dataSet = findPair(a, b, vars.plots)
-                vars.plots[dataSet][2][binNo] += computeMeanForce(magR, r, a, b)
+    magR = computeMagR(a, b, vars)[0]
+    r = computeMagR(a, b, vars)[1]
+    if vars.rMin < magR <= vars.rMax:
+        binNo = int(magR / vars.binSize)
+        if binNo < vars.binCount:
+            dataSet = findPair(a, b, vars)
+            vars.plots[dataSet][0][binNo] += computeMeanForce(magR, r, a, b)
 
 # Determine magnitude of distance R between two particles
 def computeMagR(a, b, vars):
@@ -138,8 +137,6 @@ def averageAll(vars):
                 for c in range(0, len(vars.plots[i][f])):   # Sort through all data sets
                     if vars.plots[i][-1:][0][c] != 0:
                         vars.plots[i][f][c] /= vars.plots[i][-1:][0][c]  # Divide running sum by measurement count
-        sys.stdout.write("Average running sums: {0:.2f}% Complete\r".format((float(i) / lenPlots) * 100))
-        sys.stdout.flush()
 
 # Sets all uncomputed zeros to NaN
 def zeroToNan(vars):
@@ -153,21 +150,19 @@ def zeroToNan(vars):
                     if vars.plots[set][setLength - 1][m] == 0:          # If there are zero measurements taken for a bin...
                         for q in range(0, setLength - 1):
                             vars.plots[set][q][m] = numpy.nan           # Set that bin = NaN for all subsets
-        sys.stdout.write("Converting unmeasured values to NaN: {0:.2f}% Complete\r".format((float(set) / setLength) * 100))
-        sys.stdout.flush()
 
 # Integrates a set of force data for a given pair of atoms
 def integrateForce(vars):
     for a in vars.atomGroups:
         for b in vars.atomGroups:
-            if a.number != b.number:
+            if a.number < b.number:
                 index = findPair(a, b, vars)
                 sum = 0
 
                 # Integrate the force data array, store in integrated force data array
-                for tf in range(0, len(vars.plots[index][2]) - 1):
-                    tf = len(vars.plots[index][2]) - 1 - tf
-                    sum += vars.plots[index][2][tf] * vars.binSize
+                for tf in range(0, len(vars.plots[index][0]) - 1):
+                    tf = len(vars.plots[index][0]) - 1 - tf
+                    sum += vars.plots[index][0][tf] * vars.binSize
                     vars.plots[index][len(vars.plots[index])-5][tf] = sum
 
 # Use force dcd file to examine total force interactions on particles
@@ -182,6 +177,7 @@ def computeMeanForce(magR, r, a, b):
 def rdf(vars):
     numSets = len(vars.plots)
     count = 0
+    rho = getRho(vars)
     for set in range(0, numSets):
         if set % 2 == 1:
             for bin in range(1, vars.binCount):
@@ -190,15 +186,13 @@ def rdf(vars):
                 deltaR = vars.binSize
                 volume = 4 * numpy.pi * radius**2 * deltaR
 
-                rho = getRho(vars)
-
                 hr = vars.plots[set][len(vars.plots[set])-1][bin]                     # Occurrences at distance r
                 g = hr / (volume * rho * len(vars.coord.trajectory))             # g(r)
                 vars.plots[set][len(vars.plots[set])-4][bin] = g                      # Send computed value to dataset
                 count += 1
-                sys.stdout.write("Computing RDF: {0:.2f}% Complete\r".format((float(count) / (vars.binCount * (numSets / 2))) * 100))
-                sys.stdout.flush()
 
+
+# Computes rho for RDF routine
 def getRho(vars):
     ions = []
     for ion in vars.ionsCoord:
@@ -219,6 +213,7 @@ def getRho(vars):
 
     rho = N / V
     return rho
+
 # Compute Free Energy data from Radial Distribution Data
 def freeEnergy(vars):
     numSets = len(vars.plots)

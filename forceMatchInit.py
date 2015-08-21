@@ -13,7 +13,6 @@ def getFiles(vars):
     getPsf(cF, vars)
     getForceDCDs(cF, vars)
     getCoordDCDs(cF, vars)
-    getParam(cF, vars)
     getTemp(cF, vars)
     getGroups(cF, vars)
 
@@ -59,20 +58,6 @@ def getCoordDCDs(cF, vars):
                 vars.coordDcd.append(line[:-1])
                 line = txt.next()
             print('Coordinate DCD files: {}'.format(vars.coordDcd))
-
-# Get name of the parameter file from config file
-def getParam(cF, vars):
-    txt = cF
-    while vars.param is None:
-        line = txt.next()
-        if line == 'PARAMETER FILE:\n':
-            line = txt.next()
-            while line != '\n':
-                if line == 'END CONFIG\n':
-                    print('NO PARAMETER FILE FOUND IN CONFIG')
-                vars.param = line[:-1]
-                line = txt.next()
-            print('Parameter file: {}'.format(vars.param))
 
 # Set coordinate max/min and binsize
 def getCoordBounds(cF, vars):

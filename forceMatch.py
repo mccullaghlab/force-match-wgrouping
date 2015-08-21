@@ -3,9 +3,7 @@
 __author__ = 'Greg Poisson'
 
 import sys
-import matplotlib.pyplot as plt
 import numpy
-import MDAnalysis
 import time
 import math
 import forceMatchInit
@@ -17,7 +15,7 @@ import forceMatchPlot
 
 class fileVariables:
     # FILE VARIABLES
-    configFile = "rada.config"
+    configFile = "nacl.config"
     outFileName = "forceMatch_out.dat"
     psf = None
     forceDcd = None
@@ -54,8 +52,8 @@ class fileVariables:
     plotOrder = []
 
     titles = [
-        "Total Force",
-        "Integrated Force",
+        "Mean Force",
+        "Potential of Mean Force",
         "Radial Distribution Frequency",
         "Free Energy",
         "Probability Density Distribution of Distance Frequency",
@@ -101,8 +99,8 @@ class fileVariables:
 
                 EX: Plots-  0       1       2       3       4       5
                          SOD-SOD   Data  SOD-CLA   Data  CLA-CLA   Data
-                                 [TF]            [TF]            [TF]
-                                 [IF]            [IF]            [IF]
+                                 [MF]            [MF]            [TF]
+                                 [PMF]           [PMF]           [PMF]
                                  [RDF]           [RDF]           [RDF]
                                  [FE]            [FE]            [FE]
                                  [Prob Dist]     [Prob Dist]     [Prob Dist]
@@ -137,6 +135,7 @@ def buildBlankDataSet():
     dataSet = [totForce, integF, freeEnergy, rdf, probDensity, dataCounts]
     return dataSet
 
+# Generates a LAMMPS input file and particle-pair .dat files
 def giveOutFiles(outFile):
     top = True
     for p in range(len(variables.plots)):
@@ -153,8 +152,8 @@ def giveOutFiles(outFile):
             count = 1
             for d in range(variables.binCount):
                 if not (math.isnan(variables.plots[p][3][d])):
-                    pmf = "{0:.06f}".format(float(variables.plots[p][3][d]))
-                    mf = "{0:.06f}".format(float(variables.plots[p][2][d]))
+                    pmf = "{0:.06f}".format(float(variables.plots[p][-5][d]))
+                    mf = "{0:.06f}".format(float(variables.plots[p][0][d]))
                     outFile.write("\t{}\t\t{}\t\t{}\t\t{}\n".format(count, (variables.binSize * d), pmf, mf))
                     count += 1
                     for s in range(len(variables.plots[p])):
@@ -193,24 +192,18 @@ testFrames = 20
 
 for ts in variables.coord.trajectory:
     tsf = variables.force.trajectory[ts.frame-1]
-    #if ts.frame < testFrames:
     if ts.frame < numTimesteps:
         # course grain out solvent data, evaluate grouping
         if ts.frame == 1:
             forceMatchAtomGroup.groupAtoms(variables)
             forceMatchProcesses.executeProcesses(variables, firstFrame=True)
-            #print "len(plots): {}\n".format(len(variables.plots[1][0]))
             print "Process MD frames..."
 
         else:
             forceMatchAtomGroup.updateGroups(variables)
             forceMatchProcesses.executeProcesses(variables)
-            #print "len(plots): {}\n".format(len(variables.plots[1][0]))
-            #print "len(atomGroups): {}\n".format(len(atomGroups))
     sys.stdout.write("Processing MD frames: {0:.2f}% Complete\r".format((float(ts.frame + 1) / float(numTimesteps)) * 100))
-    #sys.stdout.write("Processing MD frames: {0:.2f}% Complete\r".format((float(ts.frame) / testFrames) * 100))
     sys.stdout.flush()
-        #print "Processing MD frames: 100% Complete\n"
 forceMatchProcesses.postProcess(variables)
 
 # terminate program clock
