@@ -6,7 +6,7 @@ Consists of 5 necessary .py files and a .cfg file:
   - forceMatchAtomGroup.py
   - forceMatchProcess.py
   - forceMatchPlot.py
-  - forceMatch.cfg
+  - forceMatch.config
 
 Required Python dependencies:
   - numpy
