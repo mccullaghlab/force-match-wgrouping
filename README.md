@@ -7,6 +7,11 @@ Consists of 5 necessary .py files and a .cfg file:
   - forceMatchProcess.py
   - forceMatchPlot.py
   - forceMatch.cfg
+
+Required Python dependencies:
+  - numpy
+  - MDAnalysis
+  - matplotlib
   
 <b>Instructions</b>
 
